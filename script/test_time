@@ -15,7 +15,7 @@ add_ts() {
     local action="$2"
     
     stno=`cat "$file" | grep -n "^${action}[ ]*()" | cut -d: -f1`
-    cat "$file" | grep "^${action}[ ]*()[ ]*{$" > /dev/null && {
+    cat "$file" | grep "^${action}[ ]*()[ ]*{[ ]*$" > /dev/null && {
         sed -i "$stno a $TS" "$file"
     } || {
         sed -i "$(($stno+1)) a $TS" "$file"
@@ -27,15 +27,15 @@ add_te() {
     local action="$2" 
 
     stno=`cat "$file" | grep -n "^${action}[ ]*()" | cut -d: -f1`
-    edno=`sed -n "$stno,$ p" "$file" | grep -n "^}$" | head -n 1 | cut -d: -f1` 
+    edno=`sed -n "$stno,$ p" "$file" | grep -n "^}[ ]*$" | head -n 1 | cut -d: -f1` 
     line=$(($stno+$edno-1))
  
     [ -n "$line" ] && {
-    ret=`sed -n "$(($line-1)) p" "$file"`
+        ret=`sed -n "$(($line-1)) p" "$file"`
         echo $ret | grep "return 0" > /dev/null && {
-            sed -i "$(($line-2)) a $TE\;echo \[===$action $file costs: \$dif ms===\]" "$file" 
+            sed -i "$(($line-2)) a $TE\;echo \[===$action $file costs: \$dif ms===\] > /dev/console" "$file" 
         } || {
-            sed -i "$(($line-1)) a $TE\;echo \[===$action $file costs: \$dif ms===\]" "$file" 
+            sed -i "$(($line-1)) a $TE\;echo \[===$action $file costs: \$dif ms===\] > /dev/console" "$file" 
         }
     }
 }
@@ -52,7 +52,7 @@ dir="$1"
 [ -d $dir ] || exit 0
 
 for f in `ls $dir`; do
-    f=${dir}/${f}
+    [ "$dir" = "." ] || f=${dir}/${f}
     echo $f
     [ -f "$f" ] || continue
     cat $f | grep "^start[ ]*()" > /dev/null && add_time "$f" "start"
